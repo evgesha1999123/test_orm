@@ -1,31 +1,70 @@
 from tortoise.models import Model
 import tortoise.fields
 from enum import IntEnum
+import random
+from faker import Faker
 
+first_names = [
+    "Иван", "Александр", "Сергей", "Дмитрий", "Андрей",
+    "Алексей", "Максим", "Евгений", "Владимир", "Артем",
+    "Анна", "Елена", "Ольга", "Наталья", "Мария",
+    "Светлана", "Татьяна", "Екатерина", "Ирина", "Юлия"
+]
 
-class User(Model):
-    id = tortoise.fields.IntField(primary_key=True)
+last_names = [
+    "Иванов", "Петров", "Сидоров", "Смирнов", "Кузнецов",
+    "Попов", "Васильев", "Павлов", "Семенов", "Голубев",
+    "Виноградова", "Ковалева", "Новикова", "Морозова", "Волкова",
+    "Алексеева", "Лебедева", "Соколова", "Козлова", "Егорова"
+]
+
+class Persons(Model):
+    id = tortoise.fields.IntField(pk=True, generated=True)
+    first_name = tortoise.fields.TextField()
+    last_name = tortoise.fields.TextField()
     age = tortoise.fields.IntField()
+    email = tortoise.fields.TextField()
+    phone = tortoise.fields.TextField()
+    birth_day_date = tortoise.fields.DateField()
 
     def __str__(self):
-        return f"<User : {self.id}\t{self.age}>"
-
-class OrderStatus(IntEnum):
-    CANCELLED = 0
-    IN_PROCESS = 1
-    IN_DELIVERY = 2
-    DELIVERED = 3
-
-class users(Model):
-    id = tortoise.fields.IntField(pk=True, null=False)
-    first_name = tortoise.fields.CharField(max_length=20, null=False)
-    last_name = tortoise.fields.CharField(max_length=20, null=False)
-    age = tortoise.fields.IntField()
-    email = tortoise.fields.CharField(max_length=20, unique=True)
-    phone = tortoise.fields.CharField(max_length=20, unique=True)
-    birth_day_date = tortoise.fields.CharField(max_length=10, unique=True)
+        return f"------------Persons-----------\n{self.first_name}\n{self.last_name}\n{self.age}\n{self.email}\n{self.phone}\n{self.birth_day_date}"
 
 
-# class Order(Model):
-#     id = tortoise.fields.IntField(pk=True)
-#     order_status = tortoise.fields.IntEnumFiend
+class PersonsFactory:
+    async def _generate_randmail():
+        str_randmail = ""
+        for i in range(12):
+            char = chr(random.randint(97, 122))
+            capitalization_factor = random.randint(0, 1)
+            if capitalization_factor != 0:
+                str_randmail += char.capitalize()
+            else:
+                str_randmail += char
+        str_randmail += "@gmail.com" 
+        return str_randmail
+
+    @classmethod
+    async def generate_person(cls):
+        fake = Faker()
+        first_name = random.choice(first_names)
+        last_name = random.choice(last_names)
+        age = random.randint(18, 100)
+        email = await cls._generate_randmail()
+        phone = f"+79{random.randint(10**7, 10**8-1)}"
+        birth_day_date = fake.date()
+
+        return {
+            "first_name": first_name,
+            "last_name": last_name,
+            "age": age,
+            "email": email,
+            "phone": phone,
+            "birth_day_date": birth_day_date
+        }
+
+
+if __name__ == "__main__":
+    h = users()
+    h._generate_randmail()
+    print(h)

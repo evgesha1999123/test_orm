@@ -1,6 +1,6 @@
 import asyncio
 from tortoise import Tortoise
-from database import Persons, PersonsFactory
+from models import Persons, PersonsFactory, Tournament, Game
 from tortoise import connections
 from tortoise.expressions import Q
 
@@ -44,8 +44,8 @@ TORTOISE_ORM = {
         #     "models": ["database", "aerich.models"],
         #     "default_connection": "default"
         # },
-         "postgres_models": {
-            "models": ["database", "aerich.models"],
+         "models": {
+            "models": ["models", "aerich.models"],
             "default_connection": "default"
         }
     }
@@ -115,26 +115,54 @@ async def get_specials_by_kv():
         test_email="email"
     )
 
+# distinct() - возвращает уникальные элементы из записи
+async def get_unique_ages():
+    return await Persons.all().distinct().order_by("age").values_list("age", flat=True)
+
+async def modificators():
+    users_20_years = await Persons.filter(age=20)
+    users_not_20_years = await Persons.filter(age__not=15)
+    some_users = await Persons.filter(age__in=(20, 21, 22, 23))
+    all_users_except_some = await Persons.filter(age__not_in=(20, 21))
+    users_gte = await Persons.filter(age__gte=20)
+
+    grown_users = await Persons.filter(age__range=(20, 30))
+    grown_ups = await Persons.filter(age__range(20, 20))
+    users_with_email = await Persons.filter(email__isnull=False)
+    users_without_email = await Persons.filter(email__not__isnull=False)
+
+    # Поиск подстроки с учетом регистра
+    users_with_vi = await Persons.filter(first_name__contains="Ви")
+    # Поиск подстроки без учета регистра
+    users_with_fe = await Persons.filter(last_name__icontains="фе")
+    # Поиск по началу строки
+    bro_name = await Persons.filter(first_name__startswith="Па")
+    bro_name2 = await Persons.filter(first_name__istartswith="па")
+
+    names_end = await Persons.filter(last_name__endswith="Р")
+    names_end2 = await Persons.filter(last_name__iendswith="а")
+
+    # Приводит строку к одному регистру и ищет ее
+    evgeniy_user = await Persons.filter(first_name__iexact="ЕвГЕНИЙ").first()
+    user_with_nik = await Persons.filter(last_name__search="Ник")
+
+    # Пример поиска по дате с модификатором
+    date = await Persons.filter(birth_day_date__year__gte=1970)
+
+async def relation_test():
+    tour = await Tournament.create(name="World champ")
+    
+    game1 = await Game.create(name="Game1", tournament=tour)
+    game2 = await Game.create(name="Game2", tournament=tour)
+    game3 = await Game.create(name="Game3", tournament=tour)
+
+    return await tour.games.all().filter(name__endswith="2")
+
 if __name__ == "__main__":
     async def main():
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()
-        # wr = await get_by_filters()
-        # print(wr)
-        d = await Persons.all().first()
-        print(d)
-        is_exist = await Persons.filter(first_name="Иван").exists()
-        print(is_exist)
-        slovar = await kw()
-        print(slovar)
-        special_slovar = await kw_special()
-        print(special_slovar)
-        s = await sorting()
-        print(s)
-        kv = await get_by_kv()
-        print(kv)
-        spec = await get_specials_by_kv()
-        print(spec)
+        print(await Game.all().filter(tournament_id=6))
 
 try:
     loop.run_until_complete(main())

@@ -1,5 +1,6 @@
 from tortoise.models import Model
 import tortoise.fields
+from tortoise.fields import BackwardFKRelation
 from enum import IntEnum
 import random
 from faker import Faker
@@ -17,6 +18,23 @@ last_names = [
     "Виноградова", "Ковалева", "Новикова", "Морозова", "Волкова",
     "Алексеева", "Лебедева", "Соколова", "Козлова", "Егорова"
 ]
+
+# Связанные таблицы (один ко многим):
+# Эта связь подразумевает связь многих записей с одной общей
+# В данном кейсе - один турнир имеет много игр
+class Game(Model):
+    id = tortoise.fields.IntField(pk=True)
+    name = tortoise.fields.CharField(max_length=100)
+    tournament = tortoise.fields.ForeignKeyField(
+        "models.Tournament",
+        related_name="games"
+    )
+
+class Tournament(Model):
+    id = tortoise.fields.IntField(pk=True)
+    name = tortoise.fields.CharField(max_length=100)
+    games: BackwardFKRelation[Game]
+
 
 class Persons(Model):
     id = tortoise.fields.IntField(pk=True, generated=True)
